@@ -5,7 +5,12 @@ using namespace std;
 int main() {
     string jsondata = "{\"name\": \"Adil\"}";
     JSON * json = new JSON(jsondata);
-    bool name = json->get("name")->isNumber();
-    cout << "Name: " <<  name << endl;
+    json->set("hey", "There");
+    json->set("roles", JSON::Array());
+    json->get("roles")->push("hello");
+    json->get("roles")->push("World");
+    json->get("roles")->push("this is Adil");
+
+    cout << json->json() << endl;
     return 0;
 }
