@@ -17,6 +17,11 @@ void EventEmitter::on(string key, StringHandler _handler) {
     return on(key, (EventHandler*)handler);
 }
 
+void EventEmitter::on(string key, EmptyHandler _handler) {
+    return on(key, (EventHandler*)new EmptyEventHandler(_handler));
+}
+
+
 void EventEmitter::on(string key, JSONHandler handler) {
     return on(key, (EventHandler*)new JSONEventHandler(handler));
 }

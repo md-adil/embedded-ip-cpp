@@ -1,6 +1,12 @@
 #include "handler.h"
 
-void EventHandler::handle(std::string data) { }
+EmptyEventHandler::EmptyEventHandler(Callback _cb) {
+    callback = _cb;
+}
+
+void EmptyEventHandler::handle() {
+    callback();
+}
 
 StringEventHandler::StringEventHandler(Callback _cb) {
     callback = _cb;

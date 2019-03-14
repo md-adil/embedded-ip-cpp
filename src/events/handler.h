@@ -6,8 +6,19 @@
 
 class EventHandler {
 public:
-    virtual void handle(std::string);
+    virtual void handle() {}
+    virtual void handle(std::string) {};
 };
+
+class EmptyEventHandler: EventHandler {
+public:
+    typedef void (*Callback)();
+    EmptyEventHandler(Callback);
+    void handle();
+private:
+    Callback callback;
+};
+
 
 class StringEventHandler: EventHandler {
 public:

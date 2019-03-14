@@ -12,9 +12,11 @@ class EventEmitter {
 public:
     typedef void (*StringHandler)(string data);
     typedef void (*JSONHandler)(JSON *);
+    typedef void (*EmptyHandler)();
     void on(string, EventHandler *);
     void on(string, StringHandler);
     void on(string, JSONHandler);
+    void on(string, EmptyHandler);
     void emit(string, string);
     void dispatch(string, string);
 protected:

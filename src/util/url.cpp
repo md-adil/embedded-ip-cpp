@@ -7,7 +7,7 @@ URL::URL(string url) {
         protocol = url.substr(0, pos);
         url = url.substr(pos + 3, url.size());
     }
-    pos = url.find("/");
+    pos = url.find('/');
     if(pos != string::npos) {
         host = url.substr(0, pos);
         uri = url.substr(pos, url.size());
