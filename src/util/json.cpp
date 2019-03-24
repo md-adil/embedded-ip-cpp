@@ -1,6 +1,8 @@
 #include "json.h"
 
 JSON::JSON() {
+    cJSON data;
+    _data = &data;
 }
 
 JSON::JSON(cJSON * d) {
@@ -8,43 +10,42 @@ JSON::JSON(cJSON * d) {
 }
 
 JSON::JSON(string d) {
-    _data = cJSON_Parse(d.c_str());
+    _data = cJSON_CreateString(d.c_str());
 }
 
-vector<JSON *> JSON::toArray() {
-    vector<JSON *> items;
+vector<JSON> JSON::toArray() {
+    vector<JSON> items;
     cJSON * item;
     cJSON_ArrayForEach(item, _data) {
-        items.push_back(new JSON(item));
+        items.push_back(JSON(item));
     }
     return items;
 }
 
-// Premitive data types
-JSON * JSON::get(string key) {
-    return new JSON(
+JSON JSON::get(string key) {
+    return JSON(
         cJSON_GetObjectItemCaseSensitive(_data, key.c_str())
     );
 }
 
-JSON * JSON::set(string key, JSON * data) {
-	cJSON_AddItemToObject(_data, key.c_str(), data->_data);
-	return this;
+JSON & JSON::set(const string & key, JSON data) {
+	cJSON_AddItemToObject(_data, key.c_str(), data._data);
+	return *this;
 }
-JSON * JSON::set(string key, string data) {
+
+JSON & JSON::set(const string & key, const string & data) {
 	cJSON_AddStringToObject(_data, key.c_str(), data.c_str());
-	return this;
+	return *this;
 }
 
-
-JSON * JSON::push(JSON * data) {
-	cJSON_AddItemToArray(_data, data->_data);
-	return this;
+JSON & JSON::push(JSON & data) {
+	cJSON_AddItemToArray(_data, data._data);
+	return *this;
 }
 
-JSON * JSON::push(string data) {
+JSON & JSON::push(const string & data) {
 	cJSON_AddItemToArray(_data, cJSON_CreateString(data.c_str()));
-	return this;
+    return *this;
 }
 
 int JSON::toNumber() {
@@ -54,7 +55,6 @@ int JSON::toNumber() {
 double JSON::toDouble() {
     return _data->valuedouble;
 }
-
 
 bool JSON::isNumber() {
     return (_data->type & 0xFF) == cJSON_Number;
@@ -83,11 +83,12 @@ string JSON::pretty() {
     return (string)cJSON_Print(_data);
 }
 
-JSON * JSON::Array() {
-    return new JSON(cJSON_CreateArray());
+JSON JSON::Array() {
+    return JSON(cJSON_CreateArray());
 }
-JSON * JSON::Object() {
-    return new JSON(cJSON_CreateObject());
+
+JSON JSON::Object() {
+    return JSON(cJSON_CreateObject());
 }
 
 void JSON::each(void(*callback)(string)) {
@@ -97,6 +98,22 @@ void JSON::each(void(*callback)(string)) {
     }
 }
 
+void JSON::each(void(*callback)(JSON)) {
+    cJSON * item;
+    cJSON_ArrayForEach(item, _data) {
+        callback(JSON(item->valuestring));
+    }
+}
+void JSON::clean() {
+    cJSON_Delete(_data);
+}
+
 string JSON::json() {
     return cJSON_PrintUnformatted(_data);
+}
+
+JSON JSON::parse(const string & str) {
+    return JSON(
+        cJSON_Parse(str.c_str())
+    );
 }

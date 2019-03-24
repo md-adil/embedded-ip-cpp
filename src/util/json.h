@@ -1,5 +1,6 @@
 #ifndef JSON_H
 #define JSON_H
+#include <iostream>
 #include <string>
 #include <vector>
 #include <cjson/cJSON.h>
@@ -11,19 +12,18 @@ public:
     JSON();
     JSON(string);
     JSON(cJSON *);
-    JSON(JSON *);
-    JSON * remove(string);
-    JSON * get(string);
+    JSON & remove(string);
+    JSON get(string);
 
-    JSON * set(string, JSON*);
-    JSON * set(string, string);
-    JSON * push(JSON*);
-    JSON * push(string);
-    vector<JSON *> toArray();
+    JSON & set(const string &, JSON);
+    JSON & set(const string &, const string &);
+    JSON & push(JSON &);
+    JSON & push(const string &);
+    vector<JSON> toArray();
     string pretty();
     string toString();
     bool isNumber();
-    void each(void(*cb)(JSON*));
+    void each(void(*cb)(JSON));
     void each(void(*cb)(string));
     bool isString();
     bool isObject();
@@ -31,11 +31,13 @@ public:
     bool isBool();
     int toNumber();
     double toDouble();
+    void clean();
     string json();
-    static JSON * Array();
-    static JSON * Object();
+    static JSON parse(const string & str);
+    static JSON Array();
+    static JSON Object();
 private:
-    cJSON * _data;
+    cJSON * _data = nullptr;
 };
 
 #endif

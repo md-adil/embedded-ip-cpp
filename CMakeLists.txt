@@ -20,6 +20,10 @@ add_library(
     src/util/url.cpp
     libs/cJSON/cJSON.h
     libs/cJSON/cJSON.c
+    src/util/random.h
+    src/util/random.cpp
+    src/util/base64.h
+    src/util/base64.cpp
 )
 
 add_library(
