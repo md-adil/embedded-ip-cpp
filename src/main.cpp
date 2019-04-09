@@ -1,25 +1,42 @@
 #include <iostream>
+#include <string>
+#include <unistd.h>
 #include "util/random.h"
 #include "util/json.h"
 #include "util/base64.h"
 #include "websocket/client.h"
-#include <string>
-#include <unistd.h>
 
 using namespace std;
 
 int main() {
-    WebsocketClient io = (string)"127.0.0.1:3000/socket.io/?transport=websocket";
-    io.connect();
+    WebsocketClient client((URL)"127.0.0.1:3000/socket.io/?transport=websocket");
 
-    JSON data = JSON::Object();
-    data.set("name", "Adil");
-    data.set("roll", "Developer");
+    client.on("connect", []() {
+        cout << "Conected successfully" << endl;
+    });
 
-    // sleep(1);
-    io.ping();
+    client.on("error", [](string message) {
+        cout << "Error: " << message << endl;
+    });
 
-    io.emit("msg", "hello world this is Adil");
-    while(io.read()) {}
+    client.on("message", [](string message) {
+        cout << "Message received: " << message << endl;
+    });
+
+    client.on("hello", [](string mes) {
+        cout << "reading hello: " << mes;
+    });
+    
+    while(true) {
+        client.loop();
+    }
+   
+    return 0;
+}
+
+int mainold() {
+    char data[15] = {'a', 'd', 'i', 'l'};
+
+    cout << data << ':' << strlen(data) << endl;
     return 0;
 }

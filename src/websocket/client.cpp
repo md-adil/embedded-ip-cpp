@@ -1,28 +1,19 @@
 #include <iostream>
+#include <unistd.h>
 #include "client.h"
 
-WebsocketClient::WebsocketClient() {
-    std::cout << "Intialin" << std::endl;
-}
-
 WebsocketClient::~WebsocketClient() {
-    delete _url;
 }
-
-WebsocketClient::WebsocketClient(string url) {
-    _url = new URL(url);
-}
-
-WebsocketClient::WebsocketClient(URL url) {
-    _url = &url;
+WebsocketClient::WebsocketClient(URL url): _url(url) {
+    // connect();
 }
 
 void WebsocketClient::sendHeader() {
     const string NL = "\r\n";
     _key = base64_encode(_random.string(16));
     string handshake = "GET ";
-    handshake += _url->uri + " HTTP/1.1" + NL;
-    handshake += (string)"Host: " + _url->host + ":" + to_string(_url->port) + NL;
+    handshake += _url.uri + " HTTP/1.1" + NL;
+    handshake += (string)"Host: " + _url.host + ":" + to_string(_url.port) + NL;
     handshake += "Connection: Upgrade" + NL;
     handshake += "Upgrade: websocket" + NL;
     handshake += "Sec-WebSocket-Version: " + _version + NL;
@@ -37,18 +28,21 @@ int WebsocketClient::connect() {
     int status;
     sock = socket(AF_INET, SOCK_STREAM, _FLAG);
     if (sock < 0) {
+        dispatch("error", "Unable to initialize socket");
         return errno;
     }
     sockaddr_in address;
     sockaddr_in serv_addr;
     memset(&serv_addr, '0', sizeof(serv_addr)); 
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(_url->port);
-    serv_addr.sin_addr.s_addr = inet_addr(_url->host.c_str());
+    serv_addr.sin_port = htons(_url.port);
+    serv_addr.sin_addr.s_addr = inet_addr(_url.host.c_str());
     status = ::connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
-    if (status < 0) { 
+    if (status < 0) {
+        dispatch("error", "Unable to connect");
         return errno;
     }
+    _isConnected = true;
     sendHeader();
     return 0;
 }
@@ -57,33 +51,54 @@ void WebsocketClient::readHeader() {
     ::recv(sock, (void *)_headers, 512, _FLAG);
     char headerBody[256];
     ::recv(sock, (void *)headerBody, 256, _FLAG);
+    cout << headerBody << endl;
 }
 
-int WebsocketClient::read() {
-    char buf[buf_len];
-    cout << "Receving" << endl;
-    ssize_t recv_len = recv(sock, buf, buf_len, _FLAG);
-    std::cout << "reading: " << (string)buf << endl;
-    if(recv_len < 0) {
-        return errno;
-    }
-    if(recv_len == 0) {
+int WebsocketClient::loop() {
+    if(!_isConnected) {
+        connect();
+        sleep(1);
         return 0;
     }
-    for(int i = 0; i < recv_len; i++) {
-        cout << (int)buf[i] << ",";
+    uint8_t head[8];
+    int len, size;
+    size = recv(sock, (void*)head, 2, _FLAG);
+    if(size == 0) {
+        _isConnected = false;
+        connect();
+        return 0;
     }
-    cout << endl;
+    len = (int)head[1];
+    if(len >= 126) {
+        recv(sock, (void*)head, 2, _FLAG);
+        len = int((head[0]<<8)|(head[1])&0xff);
+    }
+    char payload[len + 1];
+    recv(sock, (void*)payload, len, _FLAG);
+    payload[len] = '\0';
+    string message = payload;
+    cout << message << endl ;
 
-    // Check if connected;
-    if(buf == "40") {
-        _isConnected = true;
+    if(message.find("0") == 0) {
+        JSON ping = JSON::parse(message.substr(1, message.size()));
+        _pingInterval = ping.get("pingInterval").toNumber();
+        _pingTimeout = ping.get("pingTimeout").toNumber();
+        return 0;
     }
-    // Check for ping request
-    if(buf == "0") {
-        // Got pong
+
+    if(message.find("40") == 0) {
+        dispatch("connect");
     }
-    return recv_len;
+
+    if(message.find("42") == 0) {
+        vector<JSON> data = JSON::parse(message.substr(2, message.size())).toArray();
+        dispatch(data[0].toString(), data[1].toString());
+    }
+
+    if(message.find("3") == 0) {
+    }
+
+    return 0;
 }
 
 int WebsocketClient::ping() {

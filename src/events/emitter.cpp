@@ -32,3 +32,18 @@ void EventEmitter::dispatch(string key, string data) {
         it->handle(data);
     }
 }
+
+void EventEmitter::dispatch(string key) {
+    if(_eventHandlers.count(key) == 0) return;
+    for(auto it : _eventHandlers.at(key)) {
+        it->handle();
+    }
+}
+
+EventEmitter::~EventEmitter() {
+    for (auto const& x : _eventHandlers) {
+        for(auto const& handler : x.second) {
+            delete handler;
+        }
+    }
+}

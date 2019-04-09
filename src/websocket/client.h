@@ -50,14 +50,12 @@ public:
         OPCode code = TEXT;
     };
 
-    WebsocketClient();
     ~WebsocketClient();
-    WebsocketClient(string);
     WebsocketClient(URL);
     int ping();
     int connect();
     int disconect();
-    int read();
+    int loop();
     Type_t sendFrame(Frame, const char *);
     void emit(string event, JSON & json);
     void emit(string event, string string);
@@ -73,10 +71,10 @@ private:
     bool _isConnected = false;
     bool _isHeader = false;
     int _pingInterval = 25000;
-    int _pingIntervalTimeout = 5000;
+    int _pingTimeout = 5000;
     string _sessionId;
     string _key;
-    URL * _url;
+    const URL _url;
     Random _random;
     void sendHeader();
     char * _headers;
