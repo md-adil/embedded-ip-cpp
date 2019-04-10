@@ -55,10 +55,12 @@ public:
     int ping();
     int connect();
     int disconect();
-    int loop();
+    int read();
+    void loop();
     Type_t sendFrame(Frame, const char *);
     void emit(string event, JSON & json);
     void emit(string event, string string);
+    void operator()();
 
 protected:
     Type_t withType(int);

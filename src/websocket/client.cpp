@@ -54,48 +54,48 @@ void WebsocketClient::readHeader() {
     cout << headerBody << endl;
 }
 
-int WebsocketClient::loop() {
-    if(!_isConnected) {
-        connect();
-        sleep(1);
-        return 0;
-    }
+int WebsocketClient::read() {
     uint8_t head[8];
-    int len, size;
-    size = recv(sock, (void*)head, 2, _FLAG);
+    int len = 0, size;
+    size = recv(sock, (void*)head, 2, MSG_DONTWAIT);
+    if(size == -1) {
+        return size;
+    }
+
     if(size == 0) {
         _isConnected = false;
-        connect();
-        return 0;
+        return size;
     }
+
     len = (int)head[1];
     if(len >= 126) {
-        recv(sock, (void*)head, 2, _FLAG);
+        recv(sock, (void*)head, 2, MSG_DONTWAIT);
         len = int((head[0]<<8)|(head[1])&0xff);
     }
+
+    if(len < 1) {
+        return 0;
+    }
+
     char payload[len + 1];
-    recv(sock, (void*)payload, len, _FLAG);
+    recv(sock, (void*)payload, len, MSG_DONTWAIT);
     payload[len] = '\0';
     string message = payload;
-    cout << message << endl ;
-
     if(message.find("0") == 0) {
         JSON ping = JSON::parse(message.substr(1, message.size()));
-        _pingInterval = ping.get("pingInterval").toNumber();
-        _pingTimeout = ping.get("pingTimeout").toNumber();
+        _pingInterval = ping.get("pingInterval").toNumber() / 1000;
+        _pingTimeout = ping.get("pingTimeout").toNumber() / 1000;
         return 0;
     }
 
     if(message.find("40") == 0) {
         dispatch("connect");
+        return 0;
     }
 
     if(message.find("42") == 0) {
         vector<JSON> data = JSON::parse(message.substr(2, message.size())).toArray();
         dispatch(data[0].toString(), data[1].toString());
-    }
-
-    if(message.find("3") == 0) {
     }
 
     return 0;
@@ -153,4 +153,25 @@ void WebsocketClient::emit(string evt, JSON & json) {
     string payload = (string)"42[\"" + evt + "\"," + json.json() + "]";
     frame.size = payload.size();
     sendFrame(frame, payload.c_str());
+}
+
+void WebsocketClient::loop() {
+    time_t startAt = time(NULL);
+    while(true) {
+        if(!_isConnected) {
+            connect();
+        }
+
+        time_t currentTime = time(NULL);
+        if(_pingInterval && currentTime - startAt > _pingInterval) {
+            startAt = currentTime;
+            ping();
+        }
+        read();
+        sleep(1);
+    }
+}
+
+void WebsocketClient::operator()() {
+   
 }

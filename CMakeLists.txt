@@ -34,4 +34,7 @@ add_library(
 
 add_executable(${projectName} src/main.cpp)
 
+find_package( Threads )
+target_link_libraries( ${projectName} ${CMAKE_THREAD_LIBS_INIT} )
+
 target_link_libraries(${projectName} websocket events util)
