@@ -16,8 +16,25 @@ void clientLoop(WebsocketClient & client) {
         sleep(1);
     }
 }
+char * userName;
+
+void waitForMessage(WebsocketClient & client, string name) {
+    cout.flush();
+    cout << name << ">> " << flush;
+    string message;
+    getline(cin, message);
+    JSON payload = JSON::Object();
+    payload.set("name", name);
+    payload.set("message", message);
+    client.emit("message", payload);
+    payload.clean();
+}
 
 int main() {
+    cout << "Enter your name: " << flush;
+    string name;
+    getline(cin, name);
+
     WebsocketClient client((URL)"127.0.0.1:3000/socket.io/?transport=websocket");
 
     client.on("connect", []() {
@@ -28,62 +45,19 @@ int main() {
         cout << "Error: " << message << endl;
     });
 
-    client.on("hellos", [](string mes) {
-        cout << "reading hello: " << mes << endl;
-    });
-
-    client.on("message", [](string message) {
-        cout << "Message received: " << message << endl;
-    });
-
-    client.on("message", [](string message) {
-        cout << "Again Same Message: " << message << endl;
+    client.on("message", [](JSON message) {
+        cout << message.get("name").toString() << ">>" << message.get("message").toString() << endl;
     });
 
     thread sock([&]() {
         client.loop();
     });
+
+    while(true) {
+        waitForMessage(client, name);
+    }
+
     sock.join();
     
-    return 0;
-}
-
-class App {
-public:
-    App() {
-        cout << "COnstructed" << endl;
-    }
-
-    ~App() {
-        cout << "DesCOnstructed" << endl;
-    }
-
-    void loop() {
-        cout << "LOoping" << endl;
-    }
-
-    void operator()() {
-        int x = 10;
-        while(x--) {
-            loop();
-            sleep(1);
-        }
-    }
-};
-
-void runTask(App & app) {
-    int x = 10;
-    while(x--) {
-        app.loop();
-        sleep(1);
-    }
-}
-
-int maini() {
-    App app;
-    thread t1([&]() {
-       app();
-    });
-    t1.join();
     return 0;
 }

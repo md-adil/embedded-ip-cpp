@@ -31,7 +31,7 @@ private:
 
 class JSONEventHandler: EventHandler {
 public:
-    typedef void (*Callback)(JSON *);
+    typedef void (*Callback)(JSON);
     JSONEventHandler(Callback);
     void handle(std::string);
 private:

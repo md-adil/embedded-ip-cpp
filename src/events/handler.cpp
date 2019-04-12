@@ -20,7 +20,7 @@ JSONEventHandler::JSONEventHandler(Callback _cb) {
     callback = _cb;
 }
 
-void JSONEventHandler::handle(string _data) {
-    JSON * json = new JSON(_data);
+void JSONEventHandler::handle(string data) {
+    JSON json = JSON::parse(data);
     callback(json);
 }

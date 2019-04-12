@@ -95,7 +95,11 @@ int WebsocketClient::read() {
 
     if(message.find("42") == 0) {
         vector<JSON> data = JSON::parse(message.substr(2, message.size())).toArray();
-        dispatch(data[0].toString(), data[1].toString());
+        if(data[1].isString()) {
+            dispatch(data[0].toString(), data[1].toString());
+        } else {
+            dispatch(data[0].toString(), data[1].json());
+        }
     }
 
     return 0;
