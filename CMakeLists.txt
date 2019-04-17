@@ -1,40 +1,31 @@
 cmake_minimum_required(VERSION 3.13)
 
-set(projectName rtos-websocket)
+set(projectName embedded-ip)
 
 project(${projectName})
 
 add_library(
     events
-    src/events/emitter.h
-    src/events/emitter.cpp
-    src/events/handler.h
-    src/events/handler.cpp
+    events/emitter.cpp
+    events/handler.cpp
 )
 
 add_library(
     util
-    src/util/json.h
-    src/util/json.cpp
-    src/util/url.h
-    src/util/url.cpp
-    libs/cJSON/cJSON.h
+    util/json.cpp
+    util/url.cpp
     libs/cJSON/cJSON.c
-    src/util/random.h
-    src/util/random.cpp
-    src/util/base64.h
-    src/util/base64.cpp
+    util/random.cpp
+    util/base64.cpp
 )
 
 add_library(
     websocket
-    src/websocket/client.h    
-    src/websocket/client.cpp
+    websocket/client.cpp
 )
 
-add_executable(${projectName} src/main.cpp)
+add_executable(${projectName} main.cpp)
 
 find_package( Threads )
 target_link_libraries( ${projectName} ${CMAKE_THREAD_LIBS_INIT} )
-
 target_link_libraries(${projectName} websocket events util)

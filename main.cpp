@@ -27,10 +27,9 @@ void waitForMessage(WebsocketClient & client, string name) {
     payload.set("name", name);
     payload.set("message", message);
     client.emit("message", payload);
-    payload.clean();
 }
 
-int main() {
+int mains() {
     cout << "Enter your name: " << flush;
     string name;
     getline(cin, name);
@@ -59,5 +58,27 @@ int main() {
 
     sock.join();
     
+    return 0;
+}
+
+int main() {
+    JSON data = JSON::Object();
+    data.set("name", "Adil ali sahil");
+    JSON expr = JSON::Array();
+    expr.push("Google");
+    expr.push("Facebook");
+    data.set("experience", expr);
+    cout << "printing: " << data.pretty() << endl;
+  
+    return 0;
+}
+
+int main2()
+{
+    cJSON * str = cJSON_CreateString("hello world");
+    char * msg = cJSON_Print(str);
+    cout << msg << endl;
+    cJSON_Delete(str);
+    delete msg;
     return 0;
 }

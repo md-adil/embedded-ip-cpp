@@ -5,12 +5,20 @@ JSON::JSON() {
     _data = &data;
 }
 
+JSON::JSON(const JSON & prv) {
+    _data = cJSON_Duplicate(prv._data, true);
+}
+
 JSON::JSON(cJSON * d) {
     _data = d;
 }
 
 JSON::JSON(string d) {
     _data = cJSON_CreateString(d.c_str());
+}
+
+JSON::~JSON() {
+    cJSON_Delete(_data);
 }
 
 vector<JSON> JSON::toArray() {
@@ -28,8 +36,8 @@ JSON JSON::get(string key) {
     );
 }
 
-JSON & JSON::set(const string & key, JSON data) {
-	cJSON_AddItemToObject(_data, key.c_str(), data._data);
+JSON & JSON::set(const string & key, JSON & data) {
+	cJSON_AddItemToObject(_data, key.c_str(), cJSON_Duplicate(data._data, true));
 	return *this;
 }
 
@@ -39,7 +47,7 @@ JSON & JSON::set(const string & key, const string & data) {
 }
 
 JSON & JSON::push(JSON & data) {
-	cJSON_AddItemToArray(_data, data._data);
+	cJSON_AddItemToArray(_data, cJSON_Duplicate(data._data, true));
 	return *this;
 }
 
@@ -80,12 +88,16 @@ string JSON::toString() {
 }
 
 string JSON::pretty() {
-    return (string)cJSON_Print(_data);
+    char * data = cJSON_Print(_data);
+    string ret = data;
+    free(data);
+    return ret;
 }
 
 JSON JSON::Array() {
     return JSON(cJSON_CreateArray());
 }
+
 
 JSON JSON::Object() {
     return JSON(cJSON_CreateObject());
@@ -104,9 +116,6 @@ void JSON::each(void(*callback)(JSON)) {
         callback(JSON(item->valuestring));
     }
 }
-void JSON::clean() {
-    cJSON_Delete(_data);
-}
 
 string JSON::json() {
     return cJSON_PrintUnformatted(_data);
@@ -116,4 +125,8 @@ JSON JSON::parse(const string & str) {
     return JSON(
         cJSON_Parse(str.c_str())
     );
+}
+
+string JSON::getString(string key) {
+    return cJSON_GetObjectItemCaseSensitive(_data, key.c_str())->valuestring;
 }
